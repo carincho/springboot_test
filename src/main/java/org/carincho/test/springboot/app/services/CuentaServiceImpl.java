@@ -5,6 +5,7 @@ import org.carincho.test.springboot.app.models.Cuenta;
 import org.carincho.test.springboot.app.repositories.BancoRepository;
 import org.carincho.test.springboot.app.repositories.CuentaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -19,28 +20,31 @@ public class CuentaServiceImpl implements CuentaService {
         this.bancoRepository = bancoRepository;
     }
 
+    @Transactional(readOnly = true)//esta debe ser de spring
     @Override
     public Cuenta findById(Long id) {
 
         return cuentaRepository.findById(id).orElseThrow();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public int revisarTotalTransferencias(Long idBanco) {
 
-        Banco banco = bancoRepository.findById(idBanco);
+        Banco banco = bancoRepository.findById(idBanco).orElseThrow();
 
 
         return banco.getTotalTransferencias();
     }
 
+    @Transactional(readOnly = true)
     @Override
     public BigDecimal revisarSaldo(Long idCuenta) {
 
         Cuenta cuenta = cuentaRepository.findById(idCuenta).orElseThrow();
         return cuenta.getSaldo();
     }
-
+    @Transactional
     @Override
     public void transferir(Long numCuentaOrigen, Long numCuentaDestino, BigDecimal monto, Long bancoId) {
 
@@ -52,11 +56,11 @@ public class CuentaServiceImpl implements CuentaService {
         cuentaDestino.credito(monto);
         cuentaRepository.save(cuentaDestino);
 
-        Banco banco = bancoRepository.findById(bancoId);
+        Banco banco = bancoRepository.findById(bancoId).orElseThrow();
         int totalTransferencias = banco.getTotalTransferencias();
 
         banco.setTotalTransferencias(++totalTransferencias);
-        bancoRepository.update(banco);
+        bancoRepository.save(banco);
 
 
     }
